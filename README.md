@@ -1,6 +1,7 @@
 # docker-cheat-sheet
 ## Container commands
-### Run new container [docker run](https://docs.docker.com/engine/reference/commandline/run)
+### Run new container 
+[docker run](https://docs.docker.com/engine/reference/commandline/run) (docker container run)
 ```
 $ docker container run --publish 80:80 nginx
 ```
@@ -84,6 +85,10 @@ Performance stats for ALL containers
 $ docker container inspect www
 ```
 View container config
+```
+$ docker container port www
+```
+View port forwarding info
 
 ### Stop container
 ```
@@ -124,4 +129,22 @@ $ docker run -rm nginx
 ```
 $ docker rm -f $(docker ps -aq)
 ```
-* Delete all running and stopped containers
+Delete all running and stopped containers
+
+## Image commands
+### Download image
+```
+$ docker pull alpine
+```
+### View downloaded images
+```
+$ docker image ls
+```
+## Network commands
+Docker networks Defaults
+* Each container connected to a private virtual network "bridge"
+* Each virtual network routes through NAT firewall on host IP
+* All container on a virtual network can talk to each other without -p
+* Best practice is to create a new virtual netwrok for each app
+  * network "my_web_app" for frontend
+  * network "my_api" for api/backend and db

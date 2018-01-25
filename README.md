@@ -17,7 +17,7 @@ $ docker container run -p 80:80 -d nginx
 * `--publish = -p` Publish container's port to host
 
 ```
-$ docker container run -p 8080:80 -d --name webhost nginx:1.11 -t
+$ docker container run -p 8080:80 -d **--name webhost** nginx:**1.11** **-t**
 ```
 * Assigns `webhost` name to container
 * `8080` hosts listening port
@@ -26,6 +26,6 @@ $ docker container run -p 8080:80 -d --name webhost nginx:1.11 -t
 * `-t` is used to change default command ran on container start
 
 ```
-$ docker run --name mysql -e MYSQL_ROOT_PASSWORD=q1 --publish 3306:3306 -d mysql
+$ docker run --name mysql **-e MYSQL_ROOT_PASSWORD=q1** --publish 3306:3306 -d mysql
 ```
 * `--env = -e` Set env variables

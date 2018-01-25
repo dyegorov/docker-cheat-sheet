@@ -1,3 +1,4 @@
 # docker-cheat-sheet
 ## Container commands
-* [`docker run`]
+### Start container
+* `docker run`

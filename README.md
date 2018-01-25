@@ -13,14 +13,8 @@ $ docker container run --publish 80:80 nginx
 $ docker container run --publish 80:80 --detach nginx
 $ docker container run -p 80:80 -d nginx
 ```
-```
---detach = -d
-```
-Runs container in background and prints its ID
-```
---publish = -p
-```
-Publish container's port to host
+* `--detach = -d` Runs container in background and prints its ID
+* `--publish = -p` Publish container's port to host
 
 ```
 $ docker container run -p 8080:80 -d --name webhost nginx:1.11 -t
@@ -33,6 +27,5 @@ $ docker container run -p 8080:80 -d --name webhost nginx:1.11 -t
 
 ```
 $ docker run --name mysql -e MYSQL_ROOT_PASSWORD=q1 --publish 3306:3306 -d mysql
---env = -e
 ```
-Set env variables
+* `--env = -e` Set env variables

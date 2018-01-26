@@ -1,7 +1,7 @@
 # docker-cheat-sheet
 ## Container commands
 ### Run new container 
-[docker run](https://docs.docker.com/engine/reference/commandline/run) (docker container run)
+[docker run](https://docs.docker.com/engine/reference/commandline/run) (`docker container run` is synonym i think)
 ```
 $ docker container run --publish 80:80 nginx
 ```
@@ -46,12 +46,25 @@ $ docker run -rm nginx
 ```
 * `-rm` Remove container when it exits
 
-### Run shell and connect to running container
+```
+$ docker container run -d --name mysql2 -e MYSQL_ALLOW_EMPTY_PASSWORD=true -v mysql-db:/var/lib/mysql mysql
+```
+Runs container with volume
+* `--volume = -v` mounts volume
+
+### Use running container
 ```
 $ docker container exec -it mongo bash
 root@73f330790898:/#
 ```
 Runs `bash` in RUNNING container
+
+```
+$ docker attach www
+```
+Attach stdi, stdo, stderr to container
+> You can detach from container and leave it running with
+> `CTRL-p CTRL-q` (from docs, i failed to do so and don't know use case for this)
 
 ### Get container info
 ```
@@ -89,6 +102,11 @@ View container config
 $ docker container port www
 ```
 View port forwarding info
+```
+$ docker container run -d --name psql9 -v psql:/var/lib/postgresql/data postgres:9
+$ docker container logs -f psql9
+```
+* `-f = follow` to view container logs in realtime
 
 ### Stop container
 ```
@@ -140,11 +158,139 @@ $ docker pull alpine
 ```
 $ docker image ls
 ```
+### View how image was built
+```
+$ docker history nginx
+```
+### Tag image
+```
+$ docker image tag nginx myname/ngynx
+$ docker image tag myname/nginx testing
+```
+### Push image to hub
+```
+$ docker image push myname/ngynx
+```
+### Login/logout
+```
+$ docker login
+```
+
+```
+$ cat .docker/config.json
+{
+  "auths" : {
+
+  }
+}
+```
+
+```
+$ docker logout
+```
+### Build image
+```
+$ docker image build -t customnginx .
+```
+
+Dockerfile:
+```
+# - you should use the 'node' official image, with the alpine 6.x branch
+FROM node:6-alpine
+# - this app listens on port 3000, but the container should launch on port 80
+# so it will respond to http://localhost:80 on your computer
+EXPOSE 3000
+# - then it should use alpine package manager to install tini: 'apk add --update tini'
+RUN apk add --update tini
+# - then it should create directory /usr/src/app for app files with 'mkdir -p /usr/src/app'
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
+# - Node uses a "package manager", so it needs to copy in package.json file
+COPY package.json package.json
+# - then it needs to run 'npm install' to install dependencies from that file
+# - to keep it clean and small, run 'npm cache clean --force' after above
+RUN npm install && npm cache clean --force
+# - then it needs to copy in all files from current directory
+COPY . .
+# - then it needs to start container with command 'tini -- node ./bin/www'
+CMD ["tini", "--", "node", "./bin/www"]
+```
 ## Network commands
-Docker networks Defaults
+### Docker networks defaults
 * Each container connected to a private virtual network "bridge"
 * Each virtual network routes through NAT firewall on host IP
 * All container on a virtual network can talk to each other without -p
 * Best practice is to create a new virtual netwrok for each app
   * network "my_web_app" for frontend
   * network "my_api" for api/backend and db
+
+### Default docker drivers
+* bridge (`--network` option not specified). Default `docker0` network built in all installations.
+* host (`--network host`). Connects to host directly, skips virtual networks. Less security, more performance.
+* none (`--network none`). No network interface
+
+###Docker Networks: Default Security
+* Create your apps so frontend/backend sit on same Docker network
+* Their inter-communication never leaves host
+* All externally exposed ports closed by default
+* You must. manually expose via -p, which is better default security
+* This get even better later with Swarm and Overlay networks
+	
+### Docker DNS
+Do not rely on IP's - use docker names. DNS is built in. Always create custom networks. Default bridge network doesn't have DNS(((
+
+### Network info
+```
+$ docker container port www
+```
+View port forwarding info
+```
+$ docker container inspect --format '{{.NetworkSettings.IPAddress}}' www
+```
+View container ip
+
+```
+$ docker network ls
+```
+List networks
+
+```
+$ docker network inspect host
+```
+View network config
+
+### Create network
+```
+$ docker network create my_app_net
+```
+Creating network using default driver `bridge`
+
+### Connect container to network
+```
+$ docker network connect my_app_net webhost
+```
+
+## Volume commands
+### Volume info
+```
+$ docker volume ls
+```
+Lists volumes
+
+```
+$ docker volume inspect ab75a759d583a2906fc183c07a3ba9f44e43f6720df52c03175172a199b01436
+```
+View volume config
+
+```
+$ docker container run -d --name mysql2 -e MYSQL_ALLOW_EMPTY_PASSWORD=true -v mysql-db:/var/lib/mysql mysql
+$ docker container run -d --name nginx -p 80:80 -v $(pwd):/usr/share/nginx/html nginx
+$ docker container run -d --name psql9 -v psql:/var/lib/postgresql/data postgres:9
+```
+Runs container with volume
+* `--volume = -v` mounts volume
+
+### Remove all unused volumes
+```
+$ docker volume prune
+```

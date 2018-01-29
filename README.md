@@ -1,6 +1,9 @@
 # docker-cheat-sheet
-* [Container commands](#container-commands)
-## Container commands
+* [Container](#container)
+* [Image](#image)
+* [Network](#network)
+* [Volume](#volume)
+## Container
 ### Run new container 
 [docker run](https://docs.docker.com/engine/reference/commandline/run) (`docker container run` is synonym i think)
 ```
@@ -150,7 +153,7 @@ $ docker rm -f $(docker ps -aq)
 ```
 Delete all running and stopped containers
 
-## Image commands
+## Image
 ### Download image
 ```
 $ docker pull alpine
@@ -220,7 +223,7 @@ CMD ["tini", "--", "node", "./bin/www"]
 ```
 $ docker rmi alpine:3.4
 ```
-## Network commands
+## Network
 ### Docker networks defaults
 * Each container connected to a private virtual network "bridge"
 * Each virtual network routes through NAT firewall on host IP
@@ -275,7 +278,7 @@ Creating network using default driver `bridge`
 $ docker network connect my_app_net webhost
 ```
 
-## Volume commands
+## Volume
 ### Volume info
 ```
 $ docker volume ls

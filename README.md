@@ -6,6 +6,7 @@
 * [Compose](#compose)
 * [Docker machine](#docker-machine)
 * [Swarm](#swarm)
+* [Stacks](#stacks)
 * [Links](#links)
 ## Container
 ### Run new container 
@@ -636,6 +637,78 @@ Both limitations can be overcome with:
 * Nginx or HAProxy LB proxy
 * Docker Enterprise Edition (comes with L4 web proxy)
 
+## Stacks
+* Stacks accept compose files as their definition for services, netwroks, and volumes
+* We use `docker stack deploy` rather then `docker service create`
+* Stacks manages all those objects for us, including overlay network per stack. Adds stack name to start of their name
+* New `deploy:` key in Compose file. Can't do `build:`
+* Compose now ignores `deploy:`, Swarm ignores `build:`
+* `docker-compose` cli not needed on swarm server
+* Stack is only for ONE swarm
+
+```
+docker@node1:~$ cat example.yml
+version: '3'
+services:
+    redis:
+        image: redis:alpine
+        networks:
+            - frontend
+    db:
+        image: postgres:9.6
+        volumes:
+            - db-data:/var/lib/postgresql/data
+        networks:
+            - backend
+        deploy:
+    vote:
+        image: bretfisher/examplevotingapp_vote
+        ports:
+            - '5000:80'
+        networks:
+            - frontend
+        deploy:
+            mode: global
+    result:
+        image: bretfisher/examplevotingapp_result
+        ports:
+            - '5001:80'
+        networks:
+            - backend
+    worker:
+        image: bretfisher/examplevotingapp_worker:java
+        networks:
+            - frontend
+            - backend
+        deploy:
+            mode: global
+networks:
+    frontend:
+    backend:
+volumes:
+    db-data:
+```
+This file is run via:
+```
+docker@node1:~$ docker stack deploy -c example.yml voteapp
+```
+And here is cli analog:
+```
+docker@node1:~$ docker network create -d overlay backend
+docker@node1:~$ docker network create -d overlay frontend
+
+docker@node1:~$ docker service create --name vote -p 80:80 --network frontend --replicas 2 dockersamples/examplevotingapp_vote
+
+docker@node1:~$ docker service create --name redis --network frontend --replicas 2 redis:3.2
+
+docker@node1:~$ docker service create --name worker --network frontend --network backend dockersamples/examplevotingapp_worker
+
+docker@node1:~$ docker service create --name db --network backend --mount type=volume,source=db-data,target=/var/lib/postgresql/data postgres:9.4
+
+docker@node1:~$ docker service create --name result --network backend -p 5001:80 docker
+samples/examplevotingapp_result
+```
+---
 ## Links
 * [Official docs](https://docs.docker.com/edge/engine/reference/commandline/docker/)
 * [Someone's cheatsheet](https://github.com/wsargent/docker-cheat-sheet/blob/master/README.md)

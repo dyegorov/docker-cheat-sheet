@@ -4,6 +4,7 @@
 * [Network](#network)
 * [Volume](#volume)
 * [Compose](#compose)
+* [Links](#links)
 ## Container
 ### Run new container 
 [docker run](https://docs.docker.com/engine/reference/commandline/run) (`docker container run` is synonym i think)
@@ -394,7 +395,6 @@ services:
       - CLUSTER_NAME=mycluster
       - CLUSTER_JOIN=mysql-primary,mysql-secondary
       - MYSQL_ROOT_PASSWORD=mypass
-   
       - MYSQL_PROXY_USER=proxyuser
       - MYSQL_PROXY_PASSWORD=s3cret
   mysql-primary:
@@ -417,3 +417,8 @@ services:
     depends_on:
       - mysql-primary
 ```
+
+## Links
+[Official docs](https://docs.docker.com/edge/engine/reference/commandline/docker/)
+[Someone's cheatsheet](https://github.com/wsargent/docker-cheat-sheet/blob/master/README.md)
+[Docker mastery src](https://github.com/BretFisher/udemy-docker-mastery)

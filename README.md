@@ -4,6 +4,7 @@
 * [Network](#network)
 * [Volume](#volume)
 * [Compose](#compose)
+* [Swarm](#swarm)
 * [Links](#links)
 ## Container
 ### Run new container 
@@ -239,7 +240,7 @@ $ docker rmi alpine:3.4
 * host (`--network host`). Connects to host directly, skips virtual networks. Less security, more performance.
 * none (`--network none`). No network interface
 
-###Docker Networks: Default Security
+### Docker Networks: Default Security
 * Create your apps so frontend/backend sit on same Docker network
 * Their inter-communication never leaves host
 * All externally exposed ports closed by default
@@ -306,9 +307,21 @@ $ docker volume prune
 ```
 
 ## Compose
+
+Compose is NOT a production-grade tool but good for local development and test
+
+* Configure relationships between containers
+* Save docker container run settings in easy-to-read file
+* Create one-liner developer environment startups
+* Consists of 2 things:
+  * YAML formatted file `docker-compose.yml` describing options for containers, networks, volumes
+  * CLI tool `docker-compose` used for loacl dev/test automation with those yaml files
+
+Now can be used directly with Swarm. `docker-compose.yml` is default filename, but ane can be used with `docker-compose -f`
+
 Compose file template
 ```
-version: '3.1'  # if no version is specificed then v1 is assumed. Recommend v2 minimum
+version: '3.1'  # if no version is specificed then v1 is assumed. Recommend v2 minimum. Use v3)))
 
 services:  # containers. same as docker run
   servicename: # a friendly name. this is also DNS name inside network
@@ -410,7 +423,6 @@ services:
     environment: 
       - CLUSTER_NAME=mycluster
       - MYSQL_ROOT_PASSWORD=mypass
-   
       - CLUSTER_JOIN=mysql-primary
       - MYSQL_PROXY_USER=proxyuser
       - MYSQL_PROXY_PASSWORD=s3cret
@@ -418,7 +430,103 @@ services:
       - mysql-primary
 ```
 
+### Start containers from compose
+```
+$ docker-compose up
+$ docker-compose up -d
+```
+* `-d` detaches from containers
+
+### View info
+```
+$ docker-compose ps
+```
+Shows running containers
+
+```
+$ docker-compose top
+```
+Shows container processes grouped by container
+
+### Stop containers
+```
+$ docker-compose down
+$ docker-compose down -v
+$ docker-compose down --rmi local
+```
+* `-v = --volumes` removes named volumes declared in compose file
+* `--rmi type` removes images. Type can be: `all` or `local`
+Stops containers and removes containers, networks, volumes and images created by `up`
+
+### Using compose to build
+* Compose can also build custom images
+* Will build them with `docker-compose up` if not found in cache
+* Also rebuild with `docker-compose build`
+* Good for complex builds that have lots of vars or build args
+
+Example:
+```
+# docker-compose.yml
+version: '2'
+
+# based off compose-sample-2, only we build nginx.conf into image
+# uses sample site from https://startbootstrap.com/template-overviews/agency/
+
+services:
+  proxy:
+    build:
+      context: .
+      dockerfile: nginx.Dockerfile
+    image: nginx-custom
+    ports:
+      - '80:80'
+  web:
+    image: httpd
+    volumes:
+      - ./html:/usr/local/apache2/htdocs/
+```
+Will `build` if can not find `nginx-custom` image
+```
+# nginx.Dockerfile
+FROM nginx:1.11
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+```
+```
+# nginx.conf
+	listen 80;
+
+	location / {
+
+		proxy_pass         http://web;
+		proxy_redirect     off;
+		proxy_set_header   Host $host;
+		proxy_set_header   X-Real-IP $remote_addr;
+		proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header   X-Forwarded-Host $server_name;
+
+	}
+}
+```
+
+## Swarm
+### Initialize
+```
+$ docker swarm init
+```
+
+### Get node info
+```
+$ docker node ls
+```
+
+### Run service
+Analogy: `docker service` = `docker run`
+
+```
+
+```
 ## Links
-[Official docs](https://docs.docker.com/edge/engine/reference/commandline/docker/)
-[Someone's cheatsheet](https://github.com/wsargent/docker-cheat-sheet/blob/master/README.md)
-[Docker mastery src](https://github.com/BretFisher/udemy-docker-mastery)
+* [Official docs](https://docs.docker.com/edge/engine/reference/commandline/docker/)
+* [Someone's cheatsheet](https://github.com/wsargent/docker-cheat-sheet/blob/master/README.md)
+* [Docker mastery src](https://github.com/BretFisher/udemy-docker-mastery)

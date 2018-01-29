@@ -1,4 +1,5 @@
 # docker-cheat-sheet
+* [Container commands](container-commands)
 ## Container commands
 ### Run new container 
 [docker run](https://docs.docker.com/engine/reference/commandline/run) (`docker container run` is synonym i think)
@@ -214,6 +215,10 @@ RUN npm install && npm cache clean --force
 COPY . .
 # - then it needs to start container with command 'tini -- node ./bin/www'
 CMD ["tini", "--", "node", "./bin/www"]
+```
+### Remove image from local image store
+```
+$ docker rmi alpine:3.4
 ```
 ## Network commands
 ### Docker networks defaults

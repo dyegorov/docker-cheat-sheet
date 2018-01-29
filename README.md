@@ -303,7 +303,8 @@ Runs container with volume
 ```
 $ docker volume prune
 ```
-##Compose
+
+## Compose
 Compose file template
 ```
 version: '3.1'  # if no version is specificed then v1 is assumed. Recommend v2 minimum
@@ -337,6 +338,7 @@ services:
       - '80:4000'
 
 ```
+
 ```
 version: '2'
 

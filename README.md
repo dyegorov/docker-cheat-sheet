@@ -4,6 +4,7 @@
 * [Network](#network)
 * [Volume](#volume)
 * [Compose](#compose)
+* [Docker machine](#docker-machine)
 * [Swarm](#swarm)
 * [Links](#links)
 ## Container
@@ -509,23 +510,132 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 }
 ```
 
-## Swarm
-### Initialize
+## Docker machine
+### Create machine
 ```
-$ docker swarm init
+$ docker-machine create node1
+```
+### List docker machines
+```
+$ docker-machine ls
+```
+### Connect to machine
+```
+$ docker-machine ssh node1
+```
+### View machine env
+```
+$ docker-machine env node1
 ```
 
+## Swarm
+* Cluster software built in in docker
+* Node can be `manager` or `worker`. Managers are workers that can control swarm
+* Manager nodes have RAFT db to store swarm configuration (root CA, configs and secrets)
+### Initialize
+Enables swarm (disabled by default)
+```
+$ docker swarm init
+docker@node1:~$ docker swarm init --advertise-addr 192.168.99.100
+```
+Get manager token
+```
+docker@node1:~$ docker swarm join-token manager
+To add a manager to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-1mgjen...1yztui 192.168.99.100:2377
+```
+### Join
+```
+docker@node2:~$ docker swarm join --token SWMTKN-1-1mgje...te7kd7 192.168.99.100:2377
+```
+Join as manager:
+```
+docker@node3:~$ docker swarm join --token SWMTKN-1-1mgjen...1yztui 192.168.99.100:2377
+This node joined a swarm as a manager.
+```
+### Upgrade node from worker to manager
+```
+docker@node1:~$ docker node update --role manager node2
+```
 ### Get node info
 ```
 $ docker node ls
 ```
 
 ### Run service
-Analogy: `docker service` = `docker run`
-
+* Analogy: `docker service` = `docker run`
+* Services are detached by default (use `detach=false` if needed)
+```
+$ docker service create alpine ping 8.8.8.8
+docker@node1:~$ docker service create --replicas 3 alpine ping 8.8.8.8
 ```
 
+### Service info
 ```
+$ docker service ls
+ID                  NAME                MODE                REPLICAS            IMAGE               PORTS
+y7v0hwc1j0ao        brave_bose          replicated          1/1                 alpine:latest
+
+$ docker service ps brave_bose
+ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE                ERROR               PORTS
+pa2siny46j1a        brave_bose.1        alpine:latest       moby                Running             Running about a minute ago
+```
+### Update service
+Is used to make rolling updates (for example)
+```
+$ docker service update y7v0hwc1j0ao --replicas 3
+```
+### Remove service
+```
+$ docker service rm brave_bose
+```
+### Overlay multihost networking
+* Overlay network - the only we can use in our swarm. It spans accross nodes.
+* Just choose --driver overlay when creating network
+* For container-to-container traffic inside a single Swarm
+* Optional IPSec (AES) encryption on network creation (disabled by default - performance)
+* Each service can be connected to multiple networks (e.g. front-end, back-end)
+
+Example
+```
+docker@node1:~$ docker service create --name psql --network mydrupal -e POSTGRES_PASSWORD=mypass postgres
+211xugmruk5w66vrc8ter7fmp
+overall progress: 1 out of 1 tasks
+1/1: running   [==================================================>]
+verify: Service converged
+
+docker@node1:~$ docker service ls
+ID                  NAME                MODE                REPLICAS            IMAGE               PORTS
+7f52yjt5gbv9        lucid_lumiere       replicated          3/3                 alpine:latest
+211xugmruk5w        psql                replicated          1/1                 postgres:latest
+
+docker@node1:~$ docker service ps psql
+ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE                    ERROR               PORTS
+wwqlahql9t6c        psql.1              postgres:latest     node2               Running             Running less than a second ago
+
+docker@node1:~$ docker service create --name drupal --network mydrupal -p 80:80 drupal
+y6vwiscda8mbcph4bier5m39o
+overall progress: 1 out of 1 tasks
+1/1: running   [==================================================>]
+verify: Service converged
+```
+### Routing Mesh
+* Routing ingress (incoming) packets for a service to proper task
+* Spans all nodes in swarm
+* Users IPVS from Linux Kernel
+* Load balances Swarm Services across their tasks
+* 2 ways this works:
+  * Container-to-container in overlay network (uses VIP)
+  * External traffic incoming to published ports (all nodes listen)
+
+### Routing Mesh Cont
+* This is stateless load balancing
+* This LB is at OSI layer 3 (TCP), not L4 (DNS)
+Both limitations can be overcome with:
+* Nginx or HAProxy LB proxy
+* Docker Enterprise Edition (comes with L4 web proxy)
+
 ## Links
 * [Official docs](https://docs.docker.com/edge/engine/reference/commandline/docker/)
 * [Someone's cheatsheet](https://github.com/wsargent/docker-cheat-sheet/blob/master/README.md)

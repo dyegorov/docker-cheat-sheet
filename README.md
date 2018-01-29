@@ -1,5 +1,5 @@
 # docker-cheat-sheet
-* [Container commands](container-commands)
+* [Container commands](#container-commands)
 ## Container commands
 ### Run new container 
 [docker run](https://docs.docker.com/engine/reference/commandline/run) (`docker container run` is synonym i think)

@@ -7,6 +7,7 @@
 * [Docker machine](#docker-machine)
 * [Swarm](#swarm)
 * [Stacks](#stacks)
+* [Secrets](#secrets)
 * [Links](#links)
 ## Container
 ### Run new container 
@@ -562,6 +563,11 @@ docker@node1:~$ docker node update --role manager node2
 ### Get node info
 ```
 $ docker node ls
+ID                            HOSTNAME            STATUS              AVAILABILITY        MANAGER STATUS
+agc1km66adr5yk119aoyc1djw *   node1               Ready               Active              Leader
+og0d0omuncjvj3yzitul1sjsx     node2               Ready               Active              Reachable
+c3nn53kc3wfyrfu24r99d796j     node3               Down                Active              Unreachable
+$ docker node ps
 ```
 
 ### Run service
@@ -646,6 +652,7 @@ Both limitations can be overcome with:
 * `docker-compose` cli not needed on swarm server
 * Stack is only for ONE swarm
 
+`docker stack deploy` also updates services
 ```
 docker@node1:~$ cat example.yml
 version: '3'
@@ -692,6 +699,7 @@ This file is run via:
 ```
 docker@node1:~$ docker stack deploy -c example.yml voteapp
 ```
+
 And here is cli analog:
 ```
 docker@node1:~$ docker network create -d overlay backend
@@ -708,6 +716,19 @@ docker@node1:~$ docker service create --name db --network backend --mount type=v
 docker@node1:~$ docker service create --name result --network backend -p 5001:80 docker
 samples/examplevotingapp_result
 ```
+
+### Stack info
+View tasks
+```
+docker@node1:~$ docker stack ps voteapp
+```
+View services
+```
+docker@node1:~$ docker stack services voteapp
+```
+
+## Secrets
+
 ---
 ## Links
 * [Official docs](https://docs.docker.com/edge/engine/reference/commandline/docker/)

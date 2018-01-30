@@ -1194,9 +1194,11 @@ services:
 
 ## Container registry
 hub.docker.com
+
 TODO: Automated builds
 
 store.docker.com
+
 cloud.docker.com
 
 ---

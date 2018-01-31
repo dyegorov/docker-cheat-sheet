@@ -986,6 +986,80 @@ $ docker-compose exec psql cat /run/secrets/psql_user
 dbuser
 ```
 
+## Healthcheck
+* Executes commands in container (e.g. `curl localhost`)
+* It expects `exit 0` (OK) or `exit 1` (Error)
+* Three container states: starting, healthy, unhealthy
+* Better then "is binary still running"
+* Not replacing monitoring
+
+### Example with docker run
+```
+$ docker run \
+> --health-cmd="curl -f localhost:9200/_cluster/health || false" \
+> --health-interval=5s \
+> --health-retries=3 \
+> --health-timeout=2s \
+> --health-start-period=15s \
+> elasticsearch:2
+```
+```
+$ docker container run --name p1 -d postgres
+$ docker container run --name p2 -d --health-cmd="pg_isready -U postgres || exit 1" postgres
+
+$ docker container ls
+CONTAINER ID        IMAGE               COMMAND                  CREATED                  STATUS                           PORTS               NAMES
+69d60ec8dd0e        postgres            "docker-entrypoint.s…"   Less than a second ago   Up 1 second (health: starting)   5432/tcp            p2
+11f5b479bd90        postgres            "docker-entrypoint.s…"   51 seconds ago           Up 59 seconds                    5432/tcp            p1
+
+$ docker container ls
+CONTAINER ID        IMAGE               COMMAND                  CREATED              STATUS                    PORTS               NAMES
+69d60ec8dd0e        postgres            "docker-entrypoint.s…"   33 seconds ago       Up 40 seconds (healthy)   5432/tcp            p2
+11f5b479bd90        postgres            "docker-entrypoint.s…"   About a minute ago   Up About a minute         5432/tcp            p1
+```
+
+### Healthcheck in dockerfile
+```
+HEALTHCHECK curl -f http://localhost/ || false
+or
+HEALTHCHECK --timeout=2s --interval=3s --retries=3 \
+  CMD curl -f http://localhost/ || exit 1
+```
+`exit 1` and `false` is the same thing
+```
+FROM nginx:1.13
+
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD curl -f http://localhost/ || exit 1
+```
+```
+FROM postgres
+HEALTHCHECK --interval=5s --timeout=3s \
+  CMD pg_isready -U postgres || exit 1
+```
+### Healthcheck in compose/stack files
+```
+version: "3.4"
+services:
+  web:
+    image: nginx
+    healthcheck:
+      test: ["CMD", "curl", "-f","http://localhost"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 1m
+```
+
+## Container registry
+hub.docker.com
+
+TODO: Automated builds
+
+store.docker.com
+
+cloud.docker.com
+
 ## Examples
 ### Multiple environments orchestration
 ```
@@ -1127,79 +1201,33 @@ $ docker-compose -f docker-compose.yml -f docker-compose.prod.yml config
 $ docker-compose -f docker-compose.yml -f docker-compose.prod.yml config > output.yml
 ```
 
-## Healthcheck
-* Executes commands in container (e.g. `curl localhost`)
-* It expects `exit 0` (OK) or `exit 1` (Error)
-* Three container states: starting, healthy, unhealthy
-* Better then "is binary still running"
-* Not replacing monitoring
-
-### Example with docker run
+### Mongo db and mongo express in stack
 ```
-$ docker run \
-> --health-cmd="curl -f localhost:9200/_cluster/health || false" \
-> --health-interval=5s \
-> --health-retries=3 \
-> --health-timeout=2s \
-> --health-start-period=15s \
-> elasticsearch:2
-```
-```
-$ docker container run --name p1 -d postgres
-$ docker container run --name p2 -d --health-cmd="pg_isready -U postgres || exit 1" postgres
-
-$ docker container ls
-CONTAINER ID        IMAGE               COMMAND                  CREATED                  STATUS                           PORTS               NAMES
-69d60ec8dd0e        postgres            "docker-entrypoint.s…"   Less than a second ago   Up 1 second (health: starting)   5432/tcp            p2
-11f5b479bd90        postgres            "docker-entrypoint.s…"   51 seconds ago           Up 59 seconds                    5432/tcp            p1
-
-$ docker container ls
-CONTAINER ID        IMAGE               COMMAND                  CREATED              STATUS                    PORTS               NAMES
-69d60ec8dd0e        postgres            "docker-entrypoint.s…"   33 seconds ago       Up 40 seconds (healthy)   5432/tcp            p2
-11f5b479bd90        postgres            "docker-entrypoint.s…"   About a minute ago   Up About a minute         5432/tcp            p1
-```
-
-### Healthcheck in dockerfile
-```
-HEALTHCHECK curl -f http://localhost/ || false
-or
-HEALTHCHECK --timeout=2s --interval=3s --retries=3 \
-  CMD curl -f http://localhost/ || exit 1
-```
-`exit 1` and `false` is the same thing
-```
-FROM nginx:1.13
-
-HEALTHCHECK --interval=30s --timeout=3s \
-  CMD curl -f http://localhost/ || exit 1
-```
-```
-FROM postgres
-HEALTHCHECK --interval=5s --timeout=3s \
-  CMD pg_isready -U postgres || exit 1
-```
-### Healthcheck in compose/stack files
-```
-version: "3.4"
+$ cat mongo.yml
+version: '3'
 services:
-  web:
-    image: nginx
-    healthcheck:
-      test: ["CMD", "curl", "-f","http://localhost"]
-      interval: 1m30s
-      timeout: 10s
-      retries: 3
-      start_period: 1m
+  mongo:
+    image: mongo:3.6.2
+    volumes:
+      - db-data:/data/db
+    networks:
+      - backend
+  admin:
+    image: mongo-express:0.42.2
+    ports:
+      - "8081:8081"
+    networks:
+      - backend
+    depends_on:
+      - db
+networks:
+  backend:
+volumes:
+  db-data:
 ```
-
-## Container registry
-hub.docker.com
-
-TODO: Automated builds
-
-store.docker.com
-
-cloud.docker.com
+```
+$ docker stack deploy -c mongo.yml mongo
+```
 
 ---
 ## Links

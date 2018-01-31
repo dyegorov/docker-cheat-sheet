@@ -154,9 +154,9 @@ $ docker container rm -f www mongo
 ```
 Removes all containers (even running)
 ```
-$ docker run -rm nginx
+$ docker run --rm -d --name mongo mongo
 ```
-* `-rm` Remove container when it exits
+* `--rm` Remove container when it exits
 
 ```
 $ docker rm -f $(docker ps -aq)

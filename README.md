@@ -816,6 +816,22 @@ wpzrdsrdsep2ol4h5img5cz7b
 * 1st way - password is stored in a file
 * 2nd - password is stored in `history`
 
+howto clean your history
+```
+$ echo saved
+saved
+```
+prepend with space 
+```
+$  echo not saved
+not saved
+```
+or remove line
+```
+$ history -d 2010
+```
+[view on stackoverflow](https://unix.stackexchange.com/questions/49214/how-to-remove-a-single-line-from-history)
+
 ### View secrets
 ```
 docker@node1:~$ docker secret ls

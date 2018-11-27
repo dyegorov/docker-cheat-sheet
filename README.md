@@ -566,6 +566,12 @@ Join as manager:
 docker@node3:~$ docker swarm join --token SWMTKN-1-1mgjen...1yztui 192.168.99.100:2377
 This node joined a swarm as a manager.
 ```
+### Leave
+```
+$ docker swarm leave
+$ docker swarm leave --force
+```
+`--force` to leave last manager node 
 ### Upgrade node from worker to manager
 ```
 docker@node1:~$ docker node update --role manager node2
